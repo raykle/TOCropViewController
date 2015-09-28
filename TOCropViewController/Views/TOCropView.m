@@ -203,6 +203,13 @@ typedef NS_ENUM(NSInteger, TOCropViewOverlayEdge) {
     self.editing = NO;
 }
 
+- (void)setIsCropBoxCanEdit:(BOOL)isCropBoxCanEdit{
+    if (!isCropBoxCanEdit) {
+        [self removeGestureRecognizer:self.gridPanGestureRecognizer];
+        self.gridPanGestureRecognizer.delegate = nil;
+    }
+}
+
 #pragma mark - View Layout -
 - (void)didMoveToSuperview
 {

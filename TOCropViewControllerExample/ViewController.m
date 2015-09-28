@@ -119,7 +119,8 @@
 {
     [self dismissViewControllerAnimated:YES completion:^{
         self.image = image;
-        TOCropViewController *cropController = [[TOCropViewController alloc] initWithImage:image];
+        TOCropViewController *cropController = [[TOCropViewController alloc] initWithImage:image defaultAspectRatio:TOCropViewControllerAspectRatioSquare isclampButtonHidden:YES];
+        cropController.isCropBoxCanEdit = NO;
         cropController.delegate = self;
         [self presentViewController:cropController animated:YES completion:nil];
     }];

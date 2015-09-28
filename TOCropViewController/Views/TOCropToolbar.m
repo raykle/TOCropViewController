@@ -106,6 +106,9 @@
     [_resetButton setImage:[TOCropToolbar resetImage] forState:UIControlStateNormal];
     [_resetButton addTarget:self action:@selector(buttonTapped:) forControlEvents:UIControlEventTouchUpInside];
     [self addSubview:_resetButton];
+    
+    [self setResetButtonHidden:YES];
+    [self setClampButtonHidden:YES];
 }
 
 - (void)layoutSubviews
@@ -226,6 +229,11 @@
         self.clampButton.tintColor = [UIColor whiteColor];
 }
 
+- (void)setClampButtonHidden:(BOOL)clampButtonHidden{
+    _clampButtonHidden = clampButtonHidden;
+    self.clampButton.hidden = clampButtonHidden;
+}
+
 - (void)setRotateButtonHidden:(BOOL)rotateButtonHidden
 {
     if (_rotateButtonHidden == rotateButtonHidden)
@@ -238,6 +246,11 @@
 - (BOOL)resetButtonEnabled
 {
     return self.resetButton.enabled;
+}
+
+- (void)setResetButtonHidden:(BOOL)resetButtonHidden{
+    _resetButtonHidden = resetButtonHidden;
+    self.resetButton.hidden = resetButtonHidden;
 }
 
 - (void)setResetButtonEnabled:(BOOL)resetButtonEnabled

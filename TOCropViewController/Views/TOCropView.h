@@ -54,6 +54,11 @@
 @property (nonatomic, readonly) CGRect cropBoxFrame;
 
 /**
+ *  Set cropBox is can edit, if NO, the crop box can not move by panGesture. Default is YES;
+ */
+@property (nonatomic, assign) BOOL isCropBoxCanEdit;
+
+/**
  The frame of the entire image in the backing scroll view
  */
 @property (nonatomic, readonly) CGRect imageViewFrame;

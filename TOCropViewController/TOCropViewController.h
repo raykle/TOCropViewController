@@ -22,6 +22,19 @@
 
 #import <UIKit/UIKit.h>
 
+typedef NS_ENUM(NSInteger, TOCropViewControllerAspectRatio) {
+    TOCropViewControllerAspectRatioOriginal,
+    TOCropViewControllerAspectRatioSquare,
+    TOCropViewControllerAspectRatio3x2,
+    TOCropViewControllerAspectRatio5x3,
+    TOCropViewControllerAspectRatio4x3,
+    TOCropViewControllerAspectRatio5x4,
+    TOCropViewControllerAspectRatio7x5,
+    TOCropViewControllerAspectRatio16x9
+};
+
+
+
 @class TOCropViewController;
 
 ///------------------------------------------------
@@ -69,6 +82,11 @@
 @property (nonatomic, weak) id<TOCropViewControllerDelegate> delegate;
 
 /**
+ *  Set cropBox is can edit, if NO, the crop box can not move by panGesture. Default is YES;
+ */
+@property (nonatomic, assign) BOOL isCropBoxCanEdit;
+
+/**
  If true, when the user hits 'Done', a UIActivityController will appear before the view controller ends
  */
 @property (nonatomic, assign) BOOL showActivitySheetOnDone;
@@ -105,6 +123,15 @@
  @param image The image that will be used to crop.
  */
 - (instancetype)initWithImage:(UIImage *)image;
+
+/**
+ *  reates a new instance of a crop view controller with the supplied image,defaultAspectRatio and set whether the clampButton is hidden
+ *
+ *  @param image       The image that will be used to crop.
+ *  @param aspectRatio default AspectRatio
+ *  @param hidden      set whether the clampButton is hidden
+ */
+- (instancetype)initWithImage:(UIImage *)image defaultAspectRatio:(TOCropViewControllerAspectRatio)aspectRatio isclampButtonHidden:(BOOL)hidden;
 
 /**
  Play a custom animation of the target image zooming to its position in the crop controller while the background fades in.

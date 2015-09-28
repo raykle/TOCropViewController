@@ -28,17 +28,6 @@
 #import "UIImage+CropRotate.h"
 #import "TOCroppedImageAttributes.h"
 
-typedef NS_ENUM(NSInteger, TOCropViewControllerAspectRatio) {
-    TOCropViewControllerAspectRatioOriginal,
-    TOCropViewControllerAspectRatioSquare,
-    TOCropViewControllerAspectRatio3x2,
-    TOCropViewControllerAspectRatio5x3,
-    TOCropViewControllerAspectRatio4x3,
-    TOCropViewControllerAspectRatio5x4,
-    TOCropViewControllerAspectRatio7x5,
-    TOCropViewControllerAspectRatio16x9
-};
-
 @interface TOCropViewController () <UIActionSheetDelegate, UIViewControllerTransitioningDelegate, TOCropViewDelegate>
 
 @property (nonatomic, readwrite) UIImage *image;
@@ -48,6 +37,8 @@ typedef NS_ENUM(NSInteger, TOCropViewControllerAspectRatio) {
 @property (nonatomic, strong) TOCropViewControllerTransitioning *transitionController;
 @property (nonatomic, strong) UIPopoverController *activityPopoverController;
 @property (nonatomic, assign) BOOL inTransition;
+@property (nonatomic, assign) TOCropViewControllerAspectRatio aspectRatio;
+@property (nonatomic, assign) BOOL isClampButtonHidden;
 
 /* Button callback */
 - (void)cancelButtonTapped;
@@ -65,6 +56,10 @@ typedef NS_ENUM(NSInteger, TOCropViewControllerAspectRatio) {
 
 - (instancetype)initWithImage:(UIImage *)image
 {
+    return [self initWithImage:image defaultAspectRatio:TOCropViewControllerAspectRatioOriginal isclampButtonHidden:NO];
+}
+
+- (instancetype)initWithImage:(UIImage *)image defaultAspectRatio:(TOCropViewControllerAspectRatio)aspectRatio isclampButtonHidden:(BOOL)hidden{
     self = [super init];
     if (self) {
         self.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
@@ -72,6 +67,8 @@ typedef NS_ENUM(NSInteger, TOCropViewControllerAspectRatio) {
         
         _transitionController = [[TOCropViewControllerTransitioning alloc] init];
         _image = image;
+        _aspectRatio = aspectRatio;
+        _isClampButtonHidden = hidden;
     }
     
     return self;
@@ -80,7 +77,7 @@ typedef NS_ENUM(NSInteger, TOCropViewControllerAspectRatio) {
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-
+    
     BOOL landscapeLayout = CGRectGetWidth(self.view.frame) > CGRectGetHeight(self.view.frame);
     self.cropView = [[TOCropView alloc] initWithImage:self.image];
     self.cropView.frame = (CGRect){(landscapeLayout ? 44.0f : 0.0f),0,(CGRectGetWidth(self.view.bounds) - (landscapeLayout ? 44.0f : 0.0f)), (CGRectGetHeight(self.view.bounds)-(landscapeLayout ? 0.0f : 44.0f)) };
@@ -102,6 +99,7 @@ typedef NS_ENUM(NSInteger, TOCropViewControllerAspectRatio) {
     self.transitioningDelegate = self;
     
     self.view.backgroundColor = self.cropView.backgroundColor;
+    self.automaticallyAdjustsScrollViewInsets = NO;
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -112,6 +110,15 @@ typedef NS_ENUM(NSInteger, TOCropViewControllerAspectRatio) {
         self.inTransition = YES;
         [self setNeedsStatusBarAppearanceUpdate];
     }
+    
+    //    CGSize aspectRatio = [self sizeForAspectRatioo:_aspectRatio];
+    //    [self.cropView setAspectLockEnabledWithAspectRatio:aspectRatio animated:NO];
+    //    if (_isClampButtonHidden) {
+    //        [self.toolbar setClampButtonHidden:YES];
+    //        [self.toolbar setResetButtonHidden:YES];
+    //    }
+    
+    self.cropView.isCropBoxCanEdit = _isCropBoxCanEdit;
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -121,6 +128,13 @@ typedef NS_ENUM(NSInteger, TOCropViewControllerAspectRatio) {
     if (animated && [UIApplication sharedApplication].statusBarHidden == NO) {
         [UIView animateWithDuration:0.3f animations:^{ [self setNeedsStatusBarAppearanceUpdate]; }];
         [self.cropView setGridOverlayHidden:NO animated:YES];
+    }
+    
+    CGSize aspectRatio = [self sizeForAspectRatioo:_aspectRatio];
+    [self.cropView setAspectLockEnabledWithAspectRatio:aspectRatio animated:YES];
+    if (_isClampButtonHidden) {
+        [self.toolbar setClampButtonHidden:YES];
+        [self.toolbar setResetButtonHidden:YES];
     }
 }
 
@@ -207,7 +221,7 @@ typedef NS_ENUM(NSInteger, TOCropViewControllerAspectRatio) {
         self.snapshotView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleRightMargin;
     
     [self.view addSubview:self.snapshotView];
-
+    
     self.toolbar.frame = [self frameForToolBarWithVerticalLayout:UIInterfaceOrientationIsLandscape(toInterfaceOrientation)];
     [self.toolbar layoutIfNeeded];
     
@@ -259,13 +273,13 @@ typedef NS_ENUM(NSInteger, TOCropViewControllerAspectRatio) {
                                                     cancelButtonTitle:NSLocalizedStringFromTable(@"Cancel", @"TOCropViewControllerLocalizable", nil)
                                                destructiveButtonTitle:nil
                                                     otherButtonTitles:NSLocalizedStringFromTable(@"Original", @"TOCropViewControllerLocalizable", nil),
-                                                                      NSLocalizedStringFromTable(@"Square", @"TOCropViewControllerLocalizable", nil),
-                                                                      verticalCropBox ? @"2:3" : @"3:2",
-                                                                      verticalCropBox ? @"3:5" : @"5:3",
-                                                                      verticalCropBox ? @"3:4" : @"4:3",
-                                                                      verticalCropBox ? @"4:5" : @"5:4",
-                                                                      verticalCropBox ? @"5:7" : @"7:5",
-                                                                      verticalCropBox ? @"9:16" : @"16:9",nil];
+                                  NSLocalizedStringFromTable(@"Square", @"TOCropViewControllerLocalizable", nil),
+                                  verticalCropBox ? @"2:3" : @"3:2",
+                                  verticalCropBox ? @"3:5" : @"5:3",
+                                  verticalCropBox ? @"3:4" : @"4:3",
+                                  verticalCropBox ? @"4:5" : @"5:4",
+                                  verticalCropBox ? @"5:7" : @"7:5",
+                                  verticalCropBox ? @"9:16" : @"16:9",nil];
     
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
         [actionSheet showFromRect:self.toolbar.clampButtonFrame inView:self.toolbar animated:YES];
@@ -273,45 +287,54 @@ typedef NS_ENUM(NSInteger, TOCropViewControllerAspectRatio) {
         [actionSheet showInView:self.view];
 }
 
-- (void)actionSheet:(UIActionSheet *)actionSheet didDismissWithButtonIndex:(NSInteger)buttonIndex
-{
-    CGSize aspectRatio = CGSizeZero;
+- (CGSize)sizeForAspectRatioo:(TOCropViewControllerAspectRatio)aspectRatio{
+    CGSize aspectSize = CGSizeZero;
     
-    switch (buttonIndex) {
+    switch (aspectRatio) {
         case TOCropViewControllerAspectRatioOriginal:
-            aspectRatio = CGSizeZero;
+            aspectSize = CGSizeZero;
             break;
         case TOCropViewControllerAspectRatioSquare:
-            aspectRatio = CGSizeMake(1.0f, 1.0f);
+            aspectSize = CGSizeMake(1.0f, 1.0f);
             break;
         case TOCropViewControllerAspectRatio3x2:
-            aspectRatio = CGSizeMake(3.0f, 2.0f);
+            aspectSize = CGSizeMake(3.0f, 2.0f);
             break;
         case TOCropViewControllerAspectRatio5x3:
-            aspectRatio = CGSizeMake(5.0f, 3.0f);
+            aspectSize = CGSizeMake(5.0f, 3.0f);
             break;
         case TOCropViewControllerAspectRatio4x3:
-            aspectRatio = CGSizeMake(4.0f, 3.0f);
+            aspectSize = CGSizeMake(4.0f, 3.0f);
             break;
         case TOCropViewControllerAspectRatio5x4:
-            aspectRatio = CGSizeMake(5.0f, 4.0f);
+            aspectSize = CGSizeMake(5.0f, 4.0f);
             break;
         case TOCropViewControllerAspectRatio7x5:
-            aspectRatio = CGSizeMake(7.0f, 5.0f);
+            aspectSize = CGSizeMake(7.0f, 5.0f);
             break;
         case TOCropViewControllerAspectRatio16x9:
-            aspectRatio = CGSizeMake(16.0f, 9.0f);
+            aspectSize = CGSizeMake(16.0f, 9.0f);
             break;
         default:
-            return;
+            break;
     }
     
     if (self.cropView.cropBoxAspectRatioIsPortrait) {
-        CGFloat width = aspectRatio.width;
-        aspectRatio.width = aspectRatio.height;
-        aspectRatio.height = width;
+        CGFloat width = aspectSize.width;
+        aspectSize.width = aspectSize.height;
+        aspectSize.height = width;
     }
     
+    return aspectSize;
+}
+
+- (void)actionSheet:(UIActionSheet *)actionSheet didDismissWithButtonIndex:(NSInteger)buttonIndex
+{
+    if (buttonIndex == actionSheet.cancelButtonIndex) {
+        return;
+    }
+    
+    CGSize aspectRatio = [self sizeForAspectRatioo:buttonIndex];
     [self.cropView setAspectLockEnabledWithAspectRatio:aspectRatio animated:YES];
     self.toolbar.clampButtonGlowing = YES;
 }
@@ -337,7 +360,7 @@ typedef NS_ENUM(NSInteger, TOCropViewControllerAspectRatio) {
 {
     self.transitionController.image = self.image;
     self.transitionController.fromFrame = frame;
-
+    
     __weak typeof (self) weakSelf = self;
     [viewController presentViewController:self animated:YES completion:^ {
         typeof (self) strongSelf = weakSelf;
@@ -357,7 +380,7 @@ typedef NS_ENUM(NSInteger, TOCropViewControllerAspectRatio) {
     self.transitionController.image = image;
     self.transitionController.fromFrame = [self.cropView convertRect:self.cropView.cropBoxFrame toView:self.view];
     self.transitionController.toFrame = frame;
-
+    
     [viewController dismissViewControllerAnimated:YES completion:^ {
         if (completion) {
             completion();
@@ -431,7 +454,7 @@ typedef NS_ENUM(NSInteger, TOCropViewControllerAspectRatio) {
 {
     CGRect cropFrame = self.cropView.croppedImageFrame;
     NSInteger angle = self.cropView.angle;
-
+    
     //If desired, when the user taps done, show an activity sheet
     if (self.showActivitySheetOnDone) {
         TOActivityCroppedImageProvider *imageItem = [[TOActivityCroppedImageProvider alloc] initWithImage:self.image cropFrame:cropFrame angle:angle];
