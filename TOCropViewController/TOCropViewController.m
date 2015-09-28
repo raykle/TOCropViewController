@@ -127,7 +127,9 @@
     self.inTransition = NO;
     if (animated && [UIApplication sharedApplication].statusBarHidden == NO) {
         [UIView animateWithDuration:0.3f animations:^{ [self setNeedsStatusBarAppearanceUpdate]; }];
-        [self.cropView setGridOverlayHidden:NO animated:YES];
+        
+        if (self.cropView.gridOverlayHidden)
+            [self.cropView setGridOverlayHidden:NO animated:YES];
     }
     
     CGSize aspectRatio = [self sizeForAspectRatioo:_aspectRatio];
@@ -270,16 +272,25 @@
     BOOL verticalCropBox = self.cropView.cropBoxAspectRatioIsPortrait;
     UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil
                                                              delegate:self
-                                                    cancelButtonTitle:NSLocalizedStringFromTable(@"Cancel", @"TOCropViewControllerLocalizable", nil)
+                                                    cancelButtonTitle:NSLocalizedStringFromTableInBundle(@"Cancel",
+                                                                                                         @"TOCropViewControllerLocalizable",
+                                                                                                         [NSBundle bundleForClass:[self class]],
+                                                                                                         nil)
                                                destructiveButtonTitle:nil
-                                                    otherButtonTitles:NSLocalizedStringFromTable(@"Original", @"TOCropViewControllerLocalizable", nil),
-                                  NSLocalizedStringFromTable(@"Square", @"TOCropViewControllerLocalizable", nil),
-                                  verticalCropBox ? @"2:3" : @"3:2",
-                                  verticalCropBox ? @"3:5" : @"5:3",
-                                  verticalCropBox ? @"3:4" : @"4:3",
-                                  verticalCropBox ? @"4:5" : @"5:4",
-                                  verticalCropBox ? @"5:7" : @"7:5",
-                                  verticalCropBox ? @"9:16" : @"16:9",nil];
+                                                    otherButtonTitles:NSLocalizedStringFromTableInBundle(@"Original",
+                                                                                                         @"TOCropViewControllerLocalizable",
+                                                                                                         [NSBundle bundleForClass:[self class]],
+                                                                                                         nil),
+                                                                      NSLocalizedStringFromTableInBundle(@"Square",
+                                                                                                         @"TOCropViewControllerLocalizable",
+                                                                                                         [NSBundle bundleForClass:[self class]],
+                                                                                                         nil),
+                                                                      verticalCropBox ? @"2:3" : @"3:2",
+                                                                      verticalCropBox ? @"3:5" : @"5:3",
+                                                                      verticalCropBox ? @"3:4" : @"4:3",
+                                                                      verticalCropBox ? @"4:5" : @"5:4",
+                                                                      verticalCropBox ? @"5:7" : @"7:5",
+                                                                      verticalCropBox ? @"9:16" : @"16:9",nil];
     
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
         [actionSheet showFromRect:self.toolbar.clampButtonFrame inView:self.toolbar animated:YES];
@@ -477,6 +488,20 @@
         }
         
         __weak typeof(activityController) blockController = activityController;
+        #if __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_8_0
+        activityController.completionWithItemsHandler = ^(NSString *activityType, BOOL completed, NSArray *returnedItems, NSError *activityError) {
+            if (!completed)
+                return;
+            
+            if ([self.delegate respondsToSelector:@selector(cropViewController:didFinishCancelled:)]) {
+                [self.delegate cropViewController:self didFinishCancelled:NO];
+            }
+            else {
+                [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
+                blockController.completionWithItemsHandler = nil;
+            }
+        };
+        #else
         activityController.completionHandler = ^(NSString *activityType, BOOL completed) {
             if (!completed)
                 return;
@@ -489,6 +514,7 @@
                 blockController.completionHandler = nil;
             }
         };
+        #endif
         
         return;
     }
